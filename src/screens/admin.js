@@ -13,6 +13,7 @@ import {
   List,
   TabView,
   Tab,
+  Input,
 } from '@ui-kitten/components';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
@@ -71,16 +72,22 @@ export const AdminScreen = ({navigation, route}) => {
   const user = route.params?.user;
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState([]);
+  const [roomName, setRoomName] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
     (async () => {
       const json = await EncryptedStorage.getItem('members');
+      const _roomName = await EncryptedStorage.getItem('roomName');
       console.log('init', json);
       if (json === undefined) {
         setMembers([]);
       } else {
         setMembers(JSON.parse(json) || []);
+      }
+
+      if (_roomName) {
+        setRoomName(_roomName);
       }
       setLoading(false);
     })();
@@ -122,6 +129,11 @@ export const AdminScreen = ({navigation, route}) => {
     [members, navigation],
   );
 
+  const saveRoomName = useCallback(async name => {
+    setRoomName(name);
+    await EncryptedStorage.setItem('roomName', name);
+  }, []);
+
   const Title = () => (
     <Text style={{fontSize: 16, fontWeight: 'bold'}}>Admin Panel</Text>
   );
@@ -149,6 +161,14 @@ export const AdminScreen = ({navigation, route}) => {
             </Tab>
             <Tab icon={SettingsIcon}>
               <Layout style={{flex: 1, paddingLeft: 20, paddingRight: 20}}>
+                <Text style={{marginBottom: 20}}>Room Name</Text>
+                <Input
+                  style={{marginBottom: 20}}
+                  placeholder="Enter Room Name"
+                  value={roomName}
+                  onChangeText={nextValue => saveRoomName(nextValue)}
+                />
+                <Text style={{marginBottom: 20}}>Pin Code Reset</Text>
                 <Button
                   appearance="outline"
                   style={{marginBottom: 20}}
@@ -168,13 +188,3 @@ export const AdminScreen = ({navigation, route}) => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  tabContainer: {
-    flex: 1,
-    padding: 20,
-  },
-  backdrop: {
-    backgroundColor: 'rgba(30, 30, 30, 0.9)',
-  },
-});

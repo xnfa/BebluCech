@@ -3,6 +3,7 @@ import * as React from 'react';
 import {StyleSheet, View, Dimensions} from 'react-native';
 import {Camera} from 'react-native-vision-camera';
 import {Text} from '@ui-kitten/components';
+import Logo from '../../assets/images/logo.svg';
 import ErrorIcon from '../../assets/images/error.svg';
 import NetworkIssue from '../../assets/images/network-issue.svg';
 
@@ -46,96 +47,117 @@ export function ScanResult({
           {
             success: (
               <View style={styles.resultMask}>
-                <Text style={styles.resultTitle}>
-                  Welcome, {'\n'}
-                  {user.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.resultContent,
-                    {
-                      color: typeColors[type],
-                    },
-                  ]}>
-                  ACCESS{'\n'}GRANTED
-                </Text>
+                <Logo style={{marginTop: 35}} width={80} height={42} />
+                <View style={styles.resultWrapper}>
+                  <Text style={styles.resultTitle}>
+                    Welcome, {'\n'}
+                    {user.name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.resultContent,
+                      {
+                        color: typeColors[type],
+                      },
+                    ]}>
+                    ACCESS{'\n'}GRANTED
+                  </Text>
+                </View>
               </View>
             ),
             retry: (
               <View style={styles.resultMask}>
-                <Text style={styles.resultTitle}>
-                  Please Try{'\n'}
-                  Again
-                </Text>
-                <Text
-                  style={[
-                    styles.resultContent,
-                    {
-                      color: typeColors[type],
-                    },
-                  ]}>
-                  ACCESS{'\n'}DENIED
-                </Text>
+                <Logo style={{marginTop: 35}} width={80} height={42} />
+                <View style={styles.resultWrapper}>
+                  <Text style={styles.resultTitle}>
+                    Please Try{'\n'}
+                    Again
+                  </Text>
+                  <Text
+                    style={[
+                      styles.resultContent,
+                      {
+                        color: typeColors[type],
+                      },
+                    ]}>
+                    ACCESS{'\n'}DENIED
+                  </Text>
+                </View>
               </View>
             ),
             failed: (
               <View style={styles.resultMask}>
-                <Text style={styles.resultTitle}>
-                  Please Contact{'\n'}
-                  Adminstrtor
-                </Text>
-                <Text
-                  style={[
-                    styles.resultContent,
-                    {
-                      color: typeColors[type],
-                    },
-                  ]}>
-                  ACCESS{'\n'}DENIED
-                </Text>
+                <Logo style={{marginTop: 35}} width={80} height={42} />
+                <View style={styles.resultWrapper}>
+                  <Text style={styles.resultTitle}>
+                    Please Contact{'\n'}
+                    Adminstrtor
+                  </Text>
+                  <Text
+                    style={[
+                      styles.resultContent,
+                      {
+                        color: typeColors[type],
+                      },
+                    ]}>
+                    ACCESS{'\n'}DENIED
+                  </Text>
+                </View>
               </View>
             ),
             deviceIssue: (
               <View style={styles.resultMask}>
-                <Text
-                  style={[styles.resultTitle, {fontSize: 28, lineHeight: 40}]}>
-                  Please Contact{'\n'}
-                  Security Guard For Assist
-                </Text>
-                <ErrorIcon width={90} height={90} />
-                <Text
-                  style={[
-                    styles.resultContent,
-                    {
-                      marginTop: 14,
-                      color: typeColors[type],
-                      fontSize: 36,
-                    },
-                  ]}>
-                  Device Error
-                </Text>
+                <Logo style={{marginTop: 35}} width={80} height={42} />
+                <View style={styles.resultWrapper}>
+                  <Text
+                    style={[
+                      styles.resultTitle,
+                      {fontSize: 28, lineHeight: 40},
+                    ]}>
+                    Please Contact{'\n'}
+                    Security Guard For Assist
+                  </Text>
+                  <ErrorIcon width={90} height={90} />
+                  <Text
+                    style={[
+                      styles.resultContent,
+                      {
+                        marginTop: 14,
+                        color: typeColors[type],
+                        fontSize: 36,
+                      },
+                    ]}>
+                    Device Error
+                  </Text>
+                </View>
               </View>
             ),
             networkIssue: (
               <View style={styles.resultMask}>
-                <Text
-                  style={[styles.resultTitle, {fontSize: 28, lineHeight: 40}]}>
-                  Please Contact{'\n'}
-                  Security Guard For Assist
-                </Text>
-                <NetworkIssue width={90} height={90} />
-                <Text
-                  style={[
-                    styles.resultContent,
-                    {
-                      marginTop: 10,
-                      color: typeColors[type],
-                      fontSize: 36,
-                      lineHeight: 40,
-                    },
-                  ]}>
-                  Network{'\n'}Connection Error
-                </Text>
+                <Logo style={{marginTop: 35}} width={80} height={42} />
+                <View style={styles.resultWrapper}>
+                  <Text
+                    style={[
+                      styles.resultTitle,
+                      {fontSize: 28, lineHeight: 40},
+                    ]}>
+                    Please Contact{'\n'}
+                    Security Guard For Assist
+                  </Text>
+                  <NetworkIssue width={90} height={90} />
+                  <Text
+                    style={[
+                      styles.resultContent,
+                      {
+                        marginTop: 10,
+                        color: typeColors[type],
+                        fontSize: 36,
+                        lineHeight: 40,
+                      },
+                    ]}>
+                    Network{'\n'}Connection Error
+                  </Text>
+                </View>
               </View>
             ),
           }[type]
@@ -154,14 +176,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   resultCameraContainer: {
-    height: Dimensions.get('window').width + 90,
+    height: Dimensions.get('window').width + 100,
     margin: 12,
     overflow: 'hidden',
     borderRadius: 16,
   },
   resultMask: {
     flex: 1,
+    alignItems: 'center',
     backgroundColor: 'rgba(30, 30, 30, 0.9)',
+  },
+  resultWrapper: {
+    flex: 1,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',

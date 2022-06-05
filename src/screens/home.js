@@ -9,7 +9,10 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
-import Border from '../../assets/images/border.svg';
+import Scan from '../../assets/images/scan.svg';
+import Border from '../../assets/images/border-outer.svg';
+import Logo from '../../assets/images/logo.svg';
+import Colon from '../../assets/images/colon.svg';
 import moment from 'moment';
 import LinearGradient from 'react-native-linear-gradient';
 import {Text, Layout} from '@ui-kitten/components';
@@ -29,7 +32,7 @@ export function HomeScreen({navigation}) {
   const [hasBLEPermission, setHasBLEPermission] = React.useState(false);
   const [now, setNow] = React.useState(moment());
   const devices = useCameraDevices();
-  const device = devices.back;
+  const device = devices.front;
   const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
     checkInverted: true,
   });
@@ -37,6 +40,7 @@ export function HomeScreen({navigation}) {
   const [user, setUser] = React.useState({});
   const [qrcode, setQrcode] = React.useState('');
   const [networkConnected, setNetworkConnected] = React.useState(false);
+  const [roomName, setRoomName] = React.useState('');
   const [tapCount, setTapCount] = React.useState(0);
   const {isPeripheralConnected, unlockEntry} = useBLE();
 
@@ -115,6 +119,13 @@ export function HomeScreen({navigation}) {
 
     setQrcode(_qrcode);
   }, [barcodes]);
+
+  React.useEffect(() => {
+    (async () => {
+      const _roomName = await EncryptedStorage.getItem('roomName');
+      setRoomName(_roomName);
+    })();
+  }, [isFocused]);
 
   React.useEffect(() => {
     if (scanLock) {
@@ -228,6 +239,7 @@ export function HomeScreen({navigation}) {
                     frameProcessorFps={5}
                   />
                   <View style={styles.cameraMask}>
+                    <Logo style={{marginTop: 32}} width={80} height={42} />
                     <View style={styles.cameraWindowWrapper}>
                       <View style={styles.cameraWindow}>
                         <Camera
@@ -237,17 +249,21 @@ export function HomeScreen({navigation}) {
                           frameProcessor={frameProcessor}
                           frameProcessorFps={5}
                         />
-                        <Border
+                        <Scan
                           style={styles.cameraBorder}
                           width={styles.cameraBorder.width}
                           height={styles.cameraBorder.height}
                         />
-                      </View>
-
-                      <View style={styles.cameraPromptWrapper}>
-                        <Text style={styles.cameraPrompt}>
-                          Scan Your QR Code Here
-                        </Text>
+                        <Border
+                          style={styles.cameraBorderOuter}
+                          width={styles.cameraBorderOuter.width}
+                          height={styles.cameraBorderOuter.height}
+                        />
+                        <View style={styles.cameraPromptWrapper}>
+                          <Text style={styles.cameraPrompt}>
+                            Scan Your QR Code Here
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </View>
@@ -257,15 +273,37 @@ export function HomeScreen({navigation}) {
           })()}
 
           <LinearGradient
-            colors={['#323244', '#262634']}
+            colors={['#2B2D31', '#151618']}
             style={styles.dateContainer}>
             <View style={styles.dateContainerInner}>
+              <Text style={styles.roomName}>{roomName}</Text>
+              <View
+                style={{
+                  height: 1,
+                  backgroundColor: '#2B2C30',
+                  marginBottom: 36,
+                  width: '100%',
+                }}
+              />
               <TouchableWithoutFeedback
                 onPress={() => navigation.navigate('Pin', {key: 'Admin'})}>
-                <Text style={styles.time}>{now.format('HH : mm')}</Text>
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
+                  <Text style={styles.time}>{now.format('HH')}</Text>
+                  <Colon style={{margin: 16}} />
+                  <Text style={styles.time}>{now.format('mm')}</Text>
+                  <Text style={styles.am}>{now.format('a').toUpperCase()}</Text>
+                </View>
               </TouchableWithoutFeedback>
               <TouchableWithoutFeedback onPress={onTap}>
-                <Text style={styles.date}> {now.format('ddd, MMM DD')}</Text>
+                <Text style={styles.date}>
+                  {' '}
+                  {now.format('DD / MMM / YYYY')}
+                </Text>
               </TouchableWithoutFeedback>
             </View>
           </LinearGradient>
@@ -280,11 +318,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: -18,
     right: -18,
-    height: 516,
-    top: -50,
+    height: 640,
+    top: -110,
   },
   cameraContainer: {
-    top: 0,
+    top: -4,
     left: 0,
     height: '100%',
     width: '100%',
@@ -292,39 +330,48 @@ const styles = StyleSheet.create({
   },
   cameraMask: {
     flex: 1,
-    backgroundColor: 'rgba(30, 30, 30, 0.9)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    alignItems: 'center',
   },
   cameraWindowWrapper: {
     position: 'absolute',
     left: 18,
     right: 18,
-    top: 50,
+    top: 110,
   },
   cameraWindow: {
-    height: Dimensions.get('window').width - 32,
-    borderColor: '#fff',
-    borderWidth: 2,
-    borderRadius: 16,
-    borderStyle: 'dashed',
+    height: Dimensions.get('window').width - 36,
+    borderRadius: 18,
     width: '100%',
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cameraBorder: {
     position: 'absolute',
     left: 14,
-    bottom: 14,
+    bottom: 18,
     width: Dimensions.get('window').width - 64,
-    height: Dimensions.get('window').width - 64,
+    height: Dimensions.get('window').width - 68,
+  },
+  cameraBorderOuter: {
+    position: 'absolute',
+    width: Dimensions.get('window').width - 32,
+    height: Dimensions.get('window').width - 36,
   },
   cameraPromptWrapper: {
-    marginTop: 34,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    width: 270,
+    borderRadius: 8,
   },
   cameraPrompt: {
-    fontSize: 24,
     color: '#fff',
     textAlign: 'center',
-    fontFamily: 'FFGoodPro-Regular',
-    width: '100%',
+    fontSize: 18,
+    lineHeight: 21,
+    letterSpacing: 1.6,
   },
   container: {
     flex: 1,
@@ -332,39 +379,47 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     overflow: 'hidden',
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    top: Dimensions.get('window').width + 114,
+    top: Dimensions.get('window').width + 124,
+    paddingHorizontal: 14,
   },
   dateContainerInner: {
     flex: 1,
     flexDirection: 'column',
-    alignItems: 'stretch',
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  time: {
-    fontSize: 104,
-    lineHeight: 104,
-    fontWeight: '400',
+  roomName: {
     color: 'white',
-    fontFamily: 'FFGoodPro-Regular',
+    fontSize: 22,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginBottom: 38,
+  },
+  time: {
+    fontSize: 60,
+    lineHeight: 70,
+    fontWeight: '500',
+    color: '#2764FF',
+  },
+  am: {
+    fontSize: 48,
+    lineHeight: 70,
+    fontWeight: '500',
+    color: '#2764FF',
+    marginLeft: 12,
   },
   date: {
+    marginTop: 21,
     fontSize: 18,
-    fontWeight: '200',
+    fontWeight: '300',
     color: 'white',
-    fontFamily: 'FFGoodPro-Regular',
-  },
-  barcodeText: {
-    fontSize: 40,
-    color: 'white',
-    fontFamily: 'FFGoodPro-Regular',
+    textAlign: 'center',
   },
   backdrop: {
     backgroundColor: 'rgba(30, 30, 30, 0.9)',

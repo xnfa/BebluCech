@@ -4,11 +4,17 @@ import {
   NativeEventEmitter,
   PermissionsAndroid,
 } from 'react-native';
+import {bytesToString, stringToBytes} from 'convert-string';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import BleManager from 'react-native-ble-manager';
 import Timeout from 'await-timeout';
+import CryptoJS from 'crypto-js';
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+const key = CryptoJS.enc.Base64.parse(
+  'nngpFBHAEYXpL9WgXV9qkRCMurk8Ei1s0jnUB4e2SKU=\n',
+);
+const iv = CryptoJS.enc.Base64.parse('bxFYUEZuS44FyES6O2B+Aw==\n');
 
 export const BLEContext = React.createContext();
 
@@ -50,42 +56,57 @@ export function BLEProvider({children}) {
     setIsScanning(false);
   }
 
-  async function connectPeripheral(id) {
-    try {
-      console.log('try connect peripheral', id);
-      setIsConnecting(true);
-      await BleManager.connect(id);
-      await Timeout.set(1000);
-      const peripheralData = await BleManager.retrieveServices(id);
-      await EncryptedStorage.setItem('peripheral_id', id);
-      console.log('retrieved peripheral services', peripheralData);
-      console.log('peripheral connected', id);
-      peripheralId = id;
-      setIsBonded(true);
-      setIsPeripheralConnected(true);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setIsConnecting(false);
-    }
-  }
+  const connectPeripheral = useCallback(
+    async id => {
+      try {
+        console.log('try connect peripheral', id);
+        setIsConnecting(true);
+        await BleManager.connect(id);
+        await Timeout.set(1000);
+        const peripheralData = await BleManager.retrieveServices(id);
+        await EncryptedStorage.setItem('peripheral_id', id);
+        console.log('retrieved peripheral services', peripheralData);
+        console.log('peripheral connected', id);
+        peripheralId = id;
+        setIsBonded(true);
+        setIsPeripheralConnected(true);
+        await Timeout.set(1000);
+        const bytes = await BleManager.read(id, '1523', '1524');
+        const randomKey = bytesToString(bytes);
+        console.log('randomKey', randomKey);
+        const encrypted = CryptoJS.AES.encrypt(randomKey, key, {
+          iv: iv,
+        }).toString(CryptoJS.format.Hex);
+        console.log('encrypted', encrypted);
+        await send('a', encrypted.slice(0, 8));
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setIsConnecting(false);
+      }
+    },
+    [send],
+  );
 
-  const handleDiscoverPeripheral = useCallback(async _peripheral => {
-    console.log('peripheral discovered', _peripheral);
-    await BleManager.stopScan();
-    if (peripheralId) {
-      return;
-    }
-    peripheralId = _peripheral.id;
-    await connectPeripheral(_peripheral.id);
-  }, []);
+  const handleDiscoverPeripheral = useCallback(
+    async _peripheral => {
+      console.log('peripheral discovered', _peripheral);
+      await BleManager.stopScan();
+      if (peripheralId) {
+        return;
+      }
+      peripheralId = _peripheral.id;
+      await connectPeripheral(_peripheral.id);
+    },
+    [connectPeripheral],
+  );
 
   const unlockEntry = useCallback(
     async _peripheral => {
       console.log('entry unlocked');
-      send(1);
+      send('u');
       setTimeout(() => {
-        send(0);
+        send('l');
       }, 5000);
     },
     [send],
@@ -141,10 +162,11 @@ export function BLEProvider({children}) {
         console.log(err);
       }
     }
-  }, []);
+  }, [connectPeripheral]);
 
-  const send = useCallback(async byte => {
-    await BleManager.write(peripheralId, '1523', '1525', [byte]);
+  const send = useCallback(async (method, params = null) => {
+    const bytes = stringToBytes(`${method}|${params}`);
+    await BleManager.write(peripheralId, '1523', '1525', bytes);
   }, []);
 
   useEffect(() => {
@@ -157,6 +179,14 @@ export function BLEProvider({children}) {
       bleManagerEmitter.addListener(
         'BleManagerDisconnectPeripheral',
         handleDisconnectedPeripheral,
+      ),
+      bleManagerEmitter.addListener(
+        'BleManagerDidUpdateValueForCharacteristic',
+        ({value, peripheral, characteristic, service}) => {
+          // Convert bytes array to string
+          const data = bytesToString(value);
+          console.log(`Recieved ${data} for characteristic ${characteristic}`);
+        },
       ),
     ];
     (async () => {

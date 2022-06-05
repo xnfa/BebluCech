@@ -8,7 +8,9 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
-import Border from '../../assets/images/border.svg';
+import Scan from '../../assets/images/scan.svg';
+import Border from '../../assets/images/border-outer.svg';
+import Logo from '../../assets/images/logo.svg';
 import moment from 'moment';
 import LinearGradient from 'react-native-linear-gradient';
 import {
@@ -32,9 +34,8 @@ export function ScanScreen({navigation}) {
   const isFocused = navigation.isFocused();
   const [hasCameraPermission, setHasCameraPermission] = React.useState(false);
   const [hasBLEPermission, setHasBLEPermission] = React.useState(false);
-  const [now, setNow] = React.useState(moment());
   const devices = useCameraDevices();
-  const device = devices.back;
+  const device = devices.front;
   const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
     checkInverted: true,
   });
@@ -42,6 +43,7 @@ export function ScanScreen({navigation}) {
   const [user, setUser] = React.useState({});
   const [qrcode, setQrcode] = React.useState('');
   const [networkConnected, setNetworkConnected] = React.useState(false);
+  const [roomName, setRoomName] = React.useState('');
   const {isPeripheralConnected, unlockEntry} = useBLE();
 
   useEffect(() => {
@@ -79,22 +81,19 @@ export function ScanScreen({navigation}) {
   }, []);
 
   React.useEffect(() => {
-    const int = setInterval(() => {
-      setNow(moment());
-    }, 1000);
-    // Specify how to clean up after this effect:
-    return function cleanup() {
-      clearInterval(int);
-    };
-  });
-
-  React.useEffect(() => {
     const _qrcode = barcodes
       .map(v => v.displayValue)
       .filter(v => v?.indexOf('#BE') === 0)[0];
 
     setQrcode(_qrcode);
   }, [barcodes]);
+
+  React.useEffect(() => {
+    (async () => {
+      const _roomName = await EncryptedStorage.getItem('roomName');
+      setRoomName(_roomName);
+    })();
+  }, [isFocused]);
 
   React.useEffect(() => {
     if (scanLock) {
@@ -226,6 +225,7 @@ export function ScanScreen({navigation}) {
                     frameProcessorFps={5}
                   />
                   <View style={styles.cameraMask}>
+                    <Logo style={{marginTop: 32}} width={80} height={42} />
                     <View style={styles.cameraWindowWrapper}>
                       <View style={styles.cameraWindow}>
                         <Camera
@@ -235,17 +235,21 @@ export function ScanScreen({navigation}) {
                           frameProcessor={frameProcessor}
                           frameProcessorFps={5}
                         />
-                        <Border
+                        <Scan
                           style={styles.cameraBorder}
                           width={styles.cameraBorder.width}
                           height={styles.cameraBorder.height}
                         />
-                      </View>
-
-                      <View style={styles.cameraPromptWrapper}>
-                        <Text style={styles.cameraPrompt}>
-                          Scan New Member's QR Code
-                        </Text>
+                        <Border
+                          style={styles.cameraBorderOuter}
+                          width={styles.cameraBorderOuter.width}
+                          height={styles.cameraBorderOuter.height}
+                        />
+                        <View style={styles.cameraPromptWrapper}>
+                          <Text style={styles.cameraPrompt}>
+                            Scan Your QR Code Here
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </View>
@@ -255,11 +259,10 @@ export function ScanScreen({navigation}) {
           })()}
 
           <LinearGradient
-            colors={['#323244', '#262634']}
+            colors={['#2B2D31', '#151618']}
             style={styles.dateContainer}>
             <View style={styles.dateContainerInner}>
-              <Text style={styles.time}>{now.format('HH : mm')}</Text>
-              <Text style={styles.date}> {now.format('ddd, MMM DD')}</Text>
+              <Text style={styles.roomName}>{roomName}</Text>
             </View>
           </LinearGradient>
         </View>
@@ -273,11 +276,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: -18,
     right: -18,
-    height: 516,
-    top: -52,
+    height: 640,
+    top: -110,
   },
   cameraContainer: {
-    top: 0,
+    top: -4,
     left: 0,
     height: '100%',
     width: '100%',
@@ -285,39 +288,48 @@ const styles = StyleSheet.create({
   },
   cameraMask: {
     flex: 1,
-    backgroundColor: 'rgba(30, 30, 30, 0.9)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    alignItems: 'center',
   },
   cameraWindowWrapper: {
     position: 'absolute',
     left: 18,
     right: 18,
-    top: 50,
+    top: 110,
   },
   cameraWindow: {
-    height: Dimensions.get('window').width - 32,
-    borderColor: '#fff',
-    borderWidth: 2,
-    borderRadius: 16,
-    borderStyle: 'dashed',
+    height: Dimensions.get('window').width - 36,
+    borderRadius: 18,
     width: '100%',
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cameraBorder: {
     position: 'absolute',
     left: 14,
-    bottom: 14,
+    bottom: 18,
     width: Dimensions.get('window').width - 64,
-    height: Dimensions.get('window').width - 64,
+    height: Dimensions.get('window').width - 68,
+  },
+  cameraBorderOuter: {
+    position: 'absolute',
+    width: Dimensions.get('window').width - 32,
+    height: Dimensions.get('window').width - 36,
   },
   cameraPromptWrapper: {
-    marginTop: 34,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    width: 270,
+    borderRadius: 8,
   },
   cameraPrompt: {
-    fontSize: 24,
     color: '#fff',
     textAlign: 'center',
-    fontFamily: 'FFGoodPro-Regular',
-    width: '100%',
+    fontSize: 18,
+    lineHeight: 21,
+    letterSpacing: 1.6,
   },
   container: {
     flex: 1,
@@ -325,41 +337,25 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     overflow: 'hidden',
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    top: Dimensions.get('window').width + 114,
+    top: Dimensions.get('window').width + 124,
+    paddingHorizontal: 14,
   },
   dateContainerInner: {
     flex: 1,
     flexDirection: 'column',
-    alignItems: 'stretch',
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  time: {
-    fontSize: 104,
-    lineHeight: 104,
+  roomName: {
+    color: 'white',
+    fontSize: 28,
     fontWeight: '400',
-    color: 'white',
-    fontFamily: 'FFGoodPro-Regular',
-  },
-  date: {
-    fontSize: 18,
-    fontWeight: '200',
-    color: 'white',
-    fontFamily: 'FFGoodPro-Regular',
-  },
-  barcodeText: {
-    fontSize: 40,
-    color: 'white',
-    fontFamily: 'FFGoodPro-Regular',
-  },
-  backdrop: {
-    backgroundColor: 'rgba(30, 30, 30, 0.9)',
+    textAlign: 'center',
   },
 });
