@@ -11,7 +11,7 @@ import {Camera, useCameraDevices} from 'react-native-vision-camera';
 import Scan from '../../assets/images/scan.svg';
 import Border from '../../assets/images/border-outer.svg';
 import Logo from '../../assets/images/logo.svg';
-import moment from 'moment';
+import {useIsFocused} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   Text,
@@ -31,9 +31,7 @@ let scanLock = false;
 const BackIcon = props => <Icon {...props} name="arrow-back" />;
 
 export function ScanScreen({navigation}) {
-  const isFocused = navigation.isFocused();
-  const [hasCameraPermission, setHasCameraPermission] = React.useState(false);
-  const [hasBLEPermission, setHasBLEPermission] = React.useState(false);
+  const isFocused = useIsFocused();
   const devices = useCameraDevices();
   const device = devices.front;
   const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
@@ -54,32 +52,6 @@ export function ScanScreen({navigation}) {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        ]);
-        console.log(granted);
-        if (
-          granted['android.permission.CAMERA'] ===
-          PermissionsAndroid.RESULTS.GRANTED
-        ) {
-          setHasCameraPermission(true);
-        }
-        if (
-          granted['android.permission.ACCESS_FINE_LOCATION'] ===
-          PermissionsAndroid.RESULTS.GRANTED
-        ) {
-          setHasBLEPermission(true);
-        }
-      } catch (err) {
-        console.warn(err);
-      }
-    })();
-  }, []);
-
   React.useEffect(() => {
     const _qrcode = barcodes
       .map(v => v.displayValue)
@@ -91,7 +63,7 @@ export function ScanScreen({navigation}) {
   React.useEffect(() => {
     (async () => {
       const _roomName = await EncryptedStorage.getItem('roomName');
-      setRoomName(_roomName);
+      setRoomName(_roomName || 'Unnamed Room');
     })();
   }, [isFocused]);
 
@@ -167,20 +139,7 @@ export function ScanScreen({navigation}) {
   return (
     <SafeAreaView style={styles.container}>
       <TopNavigation title={Title} accessoryLeft={BackAction} />
-      {(!hasBLEPermission || !hasCameraPermission) && (
-        <Layout
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column',
-          }}>
-          <Text style={{fontSize: 24, textAlign: 'center', lineHeight: 30}}>
-            Needs access to your camera and location
-          </Text>
-        </Layout>
-      )}
-      {device != null && hasBLEPermission && hasCameraPermission && (
+      {device != null && (
         <View style={styles.container}>
           {(() => {
             if (!isPeripheralConnected) {
@@ -308,7 +267,7 @@ const styles = StyleSheet.create({
   cameraBorder: {
     position: 'absolute',
     left: 14,
-    bottom: 18,
+    bottom: 16,
     width: Dimensions.get('window').width - 64,
     height: Dimensions.get('window').width - 68,
   },

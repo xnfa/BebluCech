@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useCallback, useState} from 'react';
-import {SafeAreaView, StyleSheet, Alert} from 'react-native';
+import {SafeAreaView, View, Alert} from 'react-native';
 import {
   Divider,
   Icon,
@@ -148,38 +148,56 @@ export const AdminScreen = ({navigation, route}) => {
             style={{flex: 1}}>
             <Tab style={{paddingTop: 10, paddingBottom: 10}} icon={PersonIcon}>
               <Layout style={{flex: 1}}>
-                <ListMembers members={members} onRevoked={onRevoked} />
-                <Layout style={{padding: 20}}>
-                  <Button
-                    accessoryLeft={PlusIcon}
-                    status="primary"
-                    onPress={() => navigation.navigate('Scan')}>
-                    Add Member
-                  </Button>
-                </Layout>
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: '#DEDEDE',
+                    width: '100%',
+                  }}
+                />
+                <View style={{paddingTop: 20, flex: 1}}>
+                  <ListMembers members={members} onRevoked={onRevoked} />
+                  <Layout style={{padding: 20}}>
+                    <Button
+                      accessoryLeft={PlusIcon}
+                      status="primary"
+                      onPress={() => navigation.navigate('Scan')}>
+                      Add Member
+                    </Button>
+                  </Layout>
+                </View>
               </Layout>
             </Tab>
             <Tab icon={SettingsIcon}>
-              <Layout style={{flex: 1, paddingLeft: 20, paddingRight: 20}}>
-                <Text style={{marginBottom: 20}}>Room Name</Text>
-                <Input
-                  style={{marginBottom: 20}}
-                  placeholder="Enter Room Name"
-                  value={roomName}
-                  onChangeText={nextValue => saveRoomName(nextValue)}
+              <Layout style={{flex: 1}}>
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: '#DEDEDE',
+                    width: '100%',
+                  }}
                 />
-                <Text style={{marginBottom: 20}}>Pin Code Reset</Text>
-                <Button
-                  appearance="outline"
-                  style={{marginBottom: 20}}
-                  onPress={() =>
-                    navigation.navigate('Pin', {
-                      needSet: true,
-                      key: 'Admin',
-                    })
-                  }>
-                  Reset Pin
-                </Button>
+                <View style={{paddingHorizontal: 20, paddingTop: 20, flex: 1}}>
+                  <Text style={{marginBottom: 20}}>Room Name</Text>
+                  <Input
+                    style={{marginBottom: 20}}
+                    placeholder="Enter Room Name"
+                    value={roomName}
+                    onChangeText={nextValue => saveRoomName(nextValue)}
+                  />
+                  <Text style={{marginBottom: 20}}>Pin Code Reset</Text>
+                  <Button
+                    appearance="outline"
+                    style={{marginBottom: 20}}
+                    onPress={() =>
+                      navigation.navigate('Pin', {
+                        needSet: true,
+                        key: 'Admin',
+                      })
+                    }>
+                    Reset Pin
+                  </Button>
+                </View>
               </Layout>
             </Tab>
           </TabView>

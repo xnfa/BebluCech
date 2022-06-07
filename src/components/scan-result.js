@@ -122,7 +122,7 @@ export function ScanResult({
                     style={[
                       styles.resultContent,
                       {
-                        marginTop: 14,
+                        marginTop: 0,
                         color: typeColors[type],
                         fontSize: 36,
                       },

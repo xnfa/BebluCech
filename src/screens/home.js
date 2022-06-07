@@ -13,6 +13,7 @@ import Scan from '../../assets/images/scan.svg';
 import Border from '../../assets/images/border-outer.svg';
 import Logo from '../../assets/images/logo.svg';
 import Colon from '../../assets/images/colon.svg';
+import {useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
 import LinearGradient from 'react-native-linear-gradient';
 import {Text, Layout} from '@ui-kitten/components';
@@ -27,7 +28,7 @@ let scanLock = false;
 let tapTimeout = null;
 
 export function HomeScreen({navigation}) {
-  const isFocused = navigation.isFocused();
+  const isFocused = useIsFocused();
   const [hasCameraPermission, setHasCameraPermission] = React.useState(false);
   const [hasBLEPermission, setHasBLEPermission] = React.useState(false);
   const [now, setNow] = React.useState(moment());
@@ -123,7 +124,7 @@ export function HomeScreen({navigation}) {
   React.useEffect(() => {
     (async () => {
       const _roomName = await EncryptedStorage.getItem('roomName');
-      setRoomName(_roomName);
+      setRoomName(_roomName || 'Unnamed Room');
     })();
   }, [isFocused]);
 
@@ -189,12 +190,12 @@ export function HomeScreen({navigation}) {
             justifyContent: 'center',
             flexDirection: 'column',
           }}>
-          <Text style={{fontSize: 24, textAlign: 'center', lineHeight: 30}}>
+          <Text style={{fontSize: 18, textAlign: 'center', lineHeight: 30}}>
             Needs access to your camera and location
           </Text>
         </Layout>
       )}
-      {device != null && hasBLEPermission && hasCameraPermission && (
+      {device != null && hasBLEPermission && hasCameraPermission && isFocused && (
         <View style={styles.container}>
           {(() => {
             if (!isPeripheralConnected) {
@@ -276,35 +277,40 @@ export function HomeScreen({navigation}) {
             colors={['#2B2D31', '#151618']}
             style={styles.dateContainer}>
             <View style={styles.dateContainerInner}>
-              <Text style={styles.roomName}>{roomName}</Text>
+              <View style={{flex: 1, justifyContent: 'center'}}>
+                <Text style={styles.roomName}>{roomName}</Text>
+              </View>
               <View
                 style={{
                   height: 1,
                   backgroundColor: '#2B2C30',
-                  marginBottom: 36,
                   width: '100%',
                 }}
               />
-              <TouchableWithoutFeedback
-                onPress={() => navigation.navigate('Pin', {key: 'Admin'})}>
-                <View
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}>
-                  <Text style={styles.time}>{now.format('HH')}</Text>
-                  <Colon style={{margin: 16}} />
-                  <Text style={styles.time}>{now.format('mm')}</Text>
-                  <Text style={styles.am}>{now.format('a').toUpperCase()}</Text>
-                </View>
-              </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback onPress={onTap}>
-                <Text style={styles.date}>
-                  {' '}
-                  {now.format('DD / MMM / YYYY')}
-                </Text>
-              </TouchableWithoutFeedback>
+              <View style={{flex: 3, justifyContent: 'center'}}>
+                <TouchableWithoutFeedback
+                  onPress={() => navigation.navigate('Pin', {key: 'Admin'})}>
+                  <View
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}>
+                    <Text style={styles.time}>{now.format('HH')}</Text>
+                    <Colon style={{margin: 16}} />
+                    <Text style={styles.time}>{now.format('mm')}</Text>
+                    <Text style={styles.am}>
+                      {now.format('a').toUpperCase()}
+                    </Text>
+                  </View>
+                </TouchableWithoutFeedback>
+                <TouchableWithoutFeedback onPress={onTap}>
+                  <Text style={styles.date}>
+                    {' '}
+                    {now.format('DD / MMM / YYYY')}
+                  </Text>
+                </TouchableWithoutFeedback>
+              </View>
             </View>
           </LinearGradient>
         </View>
@@ -350,7 +356,7 @@ const styles = StyleSheet.create({
   cameraBorder: {
     position: 'absolute',
     left: 14,
-    bottom: 18,
+    bottom: 16,
     width: Dimensions.get('window').width - 64,
     height: Dimensions.get('window').width - 68,
   },
@@ -392,14 +398,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   roomName: {
     color: 'white',
     fontSize: 22,
     fontWeight: '400',
     textAlign: 'center',
-    marginBottom: 38,
   },
   time: {
     fontSize: 60,
@@ -420,8 +425,5 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: 'white',
     textAlign: 'center',
-  },
-  backdrop: {
-    backgroundColor: 'rgba(30, 30, 30, 0.9)',
   },
 });
