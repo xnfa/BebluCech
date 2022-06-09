@@ -25,7 +25,6 @@ public class ScreenLock extends ReactContextBaseJavaModule {
     @ReactMethod
     public void lock() {
         final Activity activity = getCurrentActivity();
-
         ComponentName deviceAdmin = new ComponentName(activity, AdminReceiver.class);
 
         // get policy manager
@@ -51,5 +50,16 @@ public class ScreenLock extends ReactContextBaseJavaModule {
     public void unlock() {
         final Activity activity = getCurrentActivity();
         activity.stopLockTask();
+
+        // ComponentName deviceAdmin = new ComponentName(activity, AdminReceiver.class);
+
+        // // get policy manager
+        // DevicePolicyManager devicePolicyManager = (DevicePolicyManager) activity.getSystemService(Context.DEVICE_POLICY_SERVICE);
+
+        // if (devicePolicyManager.isDeviceOwnerApp(activity.getPackageName())) {
+        //     devicePolicyManager.clearDeviceOwnerApp("com.beblucech");
+        // } else {
+        //     Toast.makeText(activity, activity.getString(R.string.not_device_owner), Toast.LENGTH_SHORT).show();
+        // }
     }
 }
