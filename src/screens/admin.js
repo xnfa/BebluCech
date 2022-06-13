@@ -1,6 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useEffect, useCallback, useState} from 'react';
-import {SafeAreaView, View, Alert} from 'react-native';
+import {SafeAreaView, View} from 'react-native';
+import {showMessage} from 'react-native-flash-message';
 import {
   Divider,
   Icon,
@@ -24,13 +25,13 @@ const SettingsIcon = props => <Icon {...props} name="settings-outline" />;
 
 export const ListMembers = ({members, onRevoked}) => {
   const createRevokeAlert = ({id, name}) => {
-    Alert.alert('Confirm', `Are you sure you want to revoke ${name}`, [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {text: 'OK', onPress: () => onRevoked({id, name})},
-    ]);
+    showMessage({
+      message: 'Notice',
+      description: `${name}'s permission has been revoked`,
+      type: 'danger',
+      duration: 3000,
+    });
+    onRevoked({id, name});
   };
 
   const renderItemCtl = props => (
@@ -116,15 +117,23 @@ export const AdminScreen = ({navigation, route}) => {
     async ({id, name, companyId}) => {
       navigation.setParams({user: undefined});
       if (members.filter(v => v.id === id).length) {
-        Alert.alert('Message', `Member ${name} already granted`, [
-          {text: 'OK'},
-        ]);
+        showMessage({
+          message: 'Warning',
+          description: `${name}'s permission has already been granted`,
+          type: 'warning',
+          duration: 3000,
+        });
         return;
       }
       const _members = [...members, {id, name, companyId}];
       setMembers(_members);
       await EncryptedStorage.setItem('members', JSON.stringify(_members));
-      Alert.alert('Message', `Member ${name} add successful`, [{text: 'OK'}]);
+      showMessage({
+        message: 'Success',
+        description: `${name}'s permission has been granted`,
+        type: 'success',
+        duration: 3000,
+      });
     },
     [members, navigation],
   );

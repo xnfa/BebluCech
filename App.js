@@ -8,6 +8,8 @@ import {default as theme} from './theme.json';
 import {default as mapping} from './mapping.json';
 import {AppNavigator} from './src/navigation';
 import {BLEProvider} from './src/contexts/ble';
+import FlashMessage from 'react-native-flash-message';
+
 export default function App() {
   useKeepAwake();
   useEffect(() => {
@@ -24,6 +26,8 @@ export default function App() {
         <BLEProvider>
           <AppNavigator />
         </BLEProvider>
+
+        <FlashMessage position="top" />
       </ApplicationProvider>
     </>
   );

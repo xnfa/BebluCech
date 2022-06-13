@@ -33,6 +33,7 @@
     "react-native": "0.68.2",
     "react-native-ble-manager": "^8.1.0",
     "react-native-encrypted-storage": "^4.0.2",
+    "react-native-flash-message": "^0.2.1",
     "react-native-keychain": "^8.0.0",
     "react-native-linear-gradient": "^2.5.6",
     "react-native-reanimated": "^2.8.0",
