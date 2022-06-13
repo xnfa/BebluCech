@@ -26,7 +26,8 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import {playSuccess, playError} from '../utils/sound';
 
 let scanLock = false;
-let tapTimeout = null;
+let timeTapTimeout = null;
+let dateTapTimeout = null;
 
 export function HomeScreen({navigation}) {
   const isFocused = useIsFocused();
@@ -43,7 +44,8 @@ export function HomeScreen({navigation}) {
   const [qrcode, setQrcode] = React.useState('');
   const [networkConnected, setNetworkConnected] = React.useState(false);
   const [roomName, setRoomName] = React.useState('');
-  const [tapCount, setTapCount] = React.useState(0);
+  const [dateTapCount, setDateTapCount] = React.useState(0);
+  const [timeTapCount, setTimeTapCount] = React.useState(0);
   const {isPeripheralConnected, unlockEntry} = useBLE();
 
   useEffect(() => {
@@ -54,20 +56,35 @@ export function HomeScreen({navigation}) {
     return () => unsubscribe();
   }, []);
 
-  const onTap = useCallback(() => {
-    let count = tapCount + 1;
-    setTapCount(count);
-    if (tapTimeout) {
-      clearTimeout(tapTimeout);
-      tapTimeout = null;
+  const onDateTap = useCallback(() => {
+    let count = dateTapCount + 1;
+    setDateTapCount(count);
+    if (dateTapTimeout) {
+      clearTimeout(dateTapTimeout);
+      dateTapTimeout = null;
     }
     if (count >= 7) {
       navigation.navigate('Pin', {key: 'Settings'});
-      setTapCount(0);
+      setDateTapCount(0);
     } else {
-      tapTimeout = setTimeout(() => setTapCount(0), 5000);
+      dateTapTimeout = setTimeout(() => setDateTapCount(0), 5000);
     }
-  }, [tapCount, navigation]);
+  }, [dateTapCount, navigation]);
+
+  const onTimeTap = useCallback(() => {
+    let count = timeTapCount + 1;
+    setTimeTapCount(count);
+    if (timeTapTimeout) {
+      clearTimeout(timeTapTimeout);
+      timeTapTimeout = null;
+    }
+    if (count >= 2) {
+      navigation.navigate('Pin', {key: 'Admin'});
+      setTimeTapCount(0);
+    } else {
+      timeTapTimeout = setTimeout(() => setTimeTapCount(0), 5000);
+    }
+  }, [timeTapCount, navigation]);
 
   // useEffect(() => {
   //   (async () => {
@@ -306,8 +323,7 @@ export function HomeScreen({navigation}) {
                 }}
               />
               <View style={{flex: 3, justifyContent: 'center'}}>
-                <TouchableWithoutFeedback
-                  onPress={() => navigation.navigate('Pin', {key: 'Admin'})}>
+                <TouchableWithoutFeedback onPress={onTimeTap}>
                   <View
                     style={{
                       display: 'flex',
@@ -322,7 +338,7 @@ export function HomeScreen({navigation}) {
                     </Text>
                   </View>
                 </TouchableWithoutFeedback>
-                <TouchableWithoutFeedback onPress={onTap}>
+                <TouchableWithoutFeedback onPress={onDateTap}>
                   <Text style={styles.date}>
                     {' '}
                     {now.format('DD / MMM / YYYY')}
