@@ -108,7 +108,7 @@ export function ScanResult({
               <View style={styles.resultMask}>
                 <Logo style={{marginTop: 35}} width={80} height={42} />
                 <View style={styles.resultWrapper}>
-                  <Text style={styles.resultTitle}>QR code expired</Text>
+                  <Text style={styles.resultTitle}>QR Code Expired</Text>
                   <Text
                     style={[
                       styles.resultContent,
