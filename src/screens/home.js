@@ -23,6 +23,7 @@ import NetInfo from '@react-native-community/netinfo';
 import request from '../utils/request';
 import useBLE from '../contexts/ble';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import {playSuccess, playError} from '../utils/sound';
 
 let scanLock = false;
 let tapTimeout = null;
@@ -84,7 +85,6 @@ export function HomeScreen({navigation}) {
           PermissionsAndroid.PERMISSIONS.CAMERA,
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         ]);
-        console.log(granted);
         if (
           granted['android.permission.CAMERA'] ===
           PermissionsAndroid.RESULTS.GRANTED
@@ -114,9 +114,7 @@ export function HomeScreen({navigation}) {
   });
 
   React.useEffect(() => {
-    const _qrcode = barcodes
-      .map(v => v.displayValue)
-      .filter(v => v?.indexOf('#BE') === 0)[0];
+    const _qrcode = barcodes.map(v => v.displayValue).filter(v => v.length)[0];
 
     setQrcode(_qrcode);
   }, [barcodes]);
@@ -136,13 +134,21 @@ export function HomeScreen({navigation}) {
       scanLock = true;
       (async () => {
         try {
+          if (qrcode.indexOf('#BE') !== 0) {
+            setScanResultType('invalid');
+            playError();
+            return;
+          }
           const companyId = await EncryptedStorage.getItem('companyId');
           const members = JSON.parse(
             (await EncryptedStorage.getItem('members')) || '[]',
           );
+          const allowGuest =
+            (await EncryptedStorage.getItem('allowGuest')) === 'true';
           console.log('members', members);
           if (!companyId) {
             setScanResultType('failed');
+            playError();
             return;
           }
           const result = await request
@@ -152,23 +158,35 @@ export function HomeScreen({navigation}) {
             .then(res => res.data);
           console.log('qrcode check result', result);
           if (!result.isValid) {
-            setScanResultType('retry');
+            setScanResultType('expired');
+            playError();
           } else {
             if (result.companyId.toString() !== companyId) {
               setScanResultType('failed');
+              playError();
               return;
             }
-            if (members.filter(v => v.id === result.id).length === 0) {
+
+            if (result.id === 2147483647) {
+              if (!allowGuest) {
+                setScanResultType('failed');
+                playError();
+                return;
+              }
+            } else if (members.filter(v => v.id === result.id).length === 0) {
               setScanResultType('failed');
+              playError();
               return;
             }
             setUser(result);
             setScanResultType('success');
+            playSuccess();
             unlockEntry();
           }
         } catch (error) {
           console.log(error);
           setScanResultType('retry');
+          playError();
         } finally {
           setTimeout(() => {
             scanLock = false;

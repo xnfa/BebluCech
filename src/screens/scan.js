@@ -26,6 +26,7 @@ import NetInfo from '@react-native-community/netinfo';
 import request from '../utils/request';
 import useBLE from '../contexts/ble';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import {playSuccess, playError} from '../utils/sound';
 
 let scanLock = false;
 const BackIcon = props => <Icon {...props} name="arrow-back" />;
@@ -53,9 +54,7 @@ export function ScanScreen({navigation}) {
   }, []);
 
   React.useEffect(() => {
-    const _qrcode = barcodes
-      .map(v => v.displayValue)
-      .filter(v => v?.indexOf('#BE') === 0)[0];
+    const _qrcode = barcodes.map(v => v.displayValue).filter(v => v)[0];
 
     setQrcode(_qrcode);
   }, [barcodes]);
@@ -76,13 +75,19 @@ export function ScanScreen({navigation}) {
       scanLock = true;
       (async () => {
         try {
+          if (qrcode.indexOf('#BE') !== 0) {
+            setScanResultType('invalid');
+            playError();
+            return;
+          }
           const companyId = await EncryptedStorage.getItem('companyId');
           const members = JSON.parse(
             (await EncryptedStorage.getItem('members')) || '[]',
           );
           console.log('members', members);
           if (!companyId) {
-            setScanResultType('failed');
+            setScanResultType('expired');
+            playError();
             return;
           }
           const result = await request
@@ -92,12 +97,22 @@ export function ScanScreen({navigation}) {
             .then(res => res.data);
           console.log('qrcode check result', result);
           if (!result.isValid) {
-            setScanResultType('retry');
+            setScanResultType('expired');
+            playError();
           } else {
             if (result.companyId.toString() !== companyId) {
               setScanResultType('failed');
+              playError();
               return;
             }
+
+            if (result.id === 2147483647) {
+              setScanResultType('failed');
+              playError();
+              return;
+            }
+
+            playSuccess();
             setUser(result);
             scanLock = false;
             navigation.navigate('Admin', {
@@ -107,6 +122,7 @@ export function ScanScreen({navigation}) {
         } catch (error) {
           console.log(error);
           setScanResultType('retry');
+          playError();
         } finally {
           handle = setTimeout(() => {
             scanLock = false;

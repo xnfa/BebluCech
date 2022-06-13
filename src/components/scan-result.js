@@ -16,6 +16,8 @@ const typeColors = {
   success: colors.success,
   retry: colors.danger,
   failed: colors.danger,
+  invalid: colors.danger,
+  expired: colors.danger,
   deviceIssue: colors.warn,
   networkIssue: colors.warn,
 };
@@ -73,6 +75,40 @@ export function ScanResult({
                     Please Try{'\n'}
                     Again
                   </Text>
+                  <Text
+                    style={[
+                      styles.resultContent,
+                      {
+                        color: typeColors[type],
+                      },
+                    ]}>
+                    ACCESS{'\n'}DENIED
+                  </Text>
+                </View>
+              </View>
+            ),
+            invalid: (
+              <View style={styles.resultMask}>
+                <Logo style={{marginTop: 35}} width={80} height={42} />
+                <View style={styles.resultWrapper}>
+                  <Text style={styles.resultTitle}>Invalid QR Code</Text>
+                  <Text
+                    style={[
+                      styles.resultContent,
+                      {
+                        color: typeColors[type],
+                      },
+                    ]}>
+                    ACCESS{'\n'}DENIED
+                  </Text>
+                </View>
+              </View>
+            ),
+            expired: (
+              <View style={styles.resultMask}>
+                <Logo style={{marginTop: 35}} width={80} height={42} />
+                <View style={styles.resultWrapper}>
+                  <Text style={styles.resultTitle}>QR code expired</Text>
                   <Text
                     style={[
                       styles.resultContent,

@@ -15,6 +15,7 @@ import {
   TabView,
   Tab,
   Input,
+  Toggle,
 } from '@ui-kitten/components';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
@@ -74,12 +75,15 @@ export const AdminScreen = ({navigation, route}) => {
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState([]);
   const [roomName, setRoomName] = useState('');
+  const [allowGuest, setAllowGuest] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
     (async () => {
       const json = await EncryptedStorage.getItem('members');
       const _roomName = await EncryptedStorage.getItem('roomName');
+      const _allowGuest =
+        (await EncryptedStorage.getItem('allowGuest')) === 'true';
       console.log('init', json);
       if (json === undefined) {
         setMembers([]);
@@ -90,6 +94,7 @@ export const AdminScreen = ({navigation, route}) => {
       if (_roomName) {
         setRoomName(_roomName);
       }
+      setAllowGuest(_allowGuest);
       setLoading(false);
     })();
   }, []);
@@ -143,6 +148,11 @@ export const AdminScreen = ({navigation, route}) => {
     await EncryptedStorage.setItem('roomName', name);
   }, []);
 
+  const saveAllowGuest = useCallback(async allowed => {
+    setAllowGuest(allowed);
+    await EncryptedStorage.setItem('allowGuest', allowed ? 'true' : 'false');
+  }, []);
+
   const Title = () => (
     <Text style={{fontSize: 16, fontWeight: 'bold'}}>Admin Panel</Text>
   );
@@ -194,6 +204,15 @@ export const AdminScreen = ({navigation, route}) => {
                     value={roomName}
                     onChangeText={nextValue => saveRoomName(nextValue)}
                   />
+                  <View
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      marginBottom: 20,
+                    }}>
+                    <Text style={{flex: 1, lineHeight: 30}}>Allow Guest</Text>
+                    <Toggle checked={allowGuest} onChange={saveAllowGuest} />
+                  </View>
                   <Text style={{marginBottom: 20}}>Pin Code Reset</Text>
                   <Button
                     appearance="outline"
