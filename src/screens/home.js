@@ -27,8 +27,7 @@ import {playSuccess, playError} from '../utils/sound';
 
 let scanLock = false;
 let tapTimeout = null;
-let lastestQrcode;
-let lastestQrcodeTimeout;
+let qrcodeCache = [];
 
 export function HomeScreen({navigation}) {
   const isFocused = useIsFocused();
@@ -116,23 +115,19 @@ export function HomeScreen({navigation}) {
   });
 
   React.useEffect(() => {
-    const _qrcode = barcodes.map(v => v.displayValue).filter(v => v.length)[0];
-
-    if (lastestQrcode && lastestQrcode === _qrcode) {
-      return;
-    }
+    const _qrcode = barcodes.filter(v => v.displayValue)[0];
 
     if (_qrcode) {
-      lastestQrcode = _qrcode;
-      if (lastestQrcodeTimeout) {
-        clearTimeout(lastestQrcodeTimeout);
+      const sign = JSON.stringify(_qrcode);
+      if (qrcodeCache.indexOf(sign) > -1) {
+        return;
+      } else {
+        qrcodeCache = qrcodeCache.slice(-5);
+        qrcodeCache.push(sign);
       }
-      lastestQrcodeTimeout = setTimeout(() => {
-        lastestQrcode = undefined;
-      }, 8000);
     }
 
-    setQrcode(_qrcode);
+    setQrcode(_qrcode?.displayValue);
   }, [barcodes]);
 
   React.useEffect(() => {
@@ -206,6 +201,7 @@ export function HomeScreen({navigation}) {
         } finally {
           setTimeout(() => {
             scanLock = false;
+            setQrcode(undefined);
             setScanResultType(null);
             setUser({});
           }, 5000);

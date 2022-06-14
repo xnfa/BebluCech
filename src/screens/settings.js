@@ -19,6 +19,7 @@ import {
   Input,
 } from '@ui-kitten/components';
 import EncryptedStorage from 'react-native-encrypted-storage';
+import DeviceInfo from 'react-native-device-info';
 import useBLE from '../contexts/ble';
 
 const BackIcon = props => <Icon {...props} name="arrow-back" />;
@@ -26,6 +27,7 @@ const BackIcon = props => <Icon {...props} name="arrow-back" />;
 export const SettingsScreen = ({navigation, route}) => {
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState();
+  const [version, setVersion] = useState('');
   const {
     isPeripheralConnected,
     isScanning,
@@ -39,6 +41,7 @@ export const SettingsScreen = ({navigation, route}) => {
   /** loading storage */
   useEffect(() => {
     (async () => {
+      setVersion(DeviceInfo.getVersion());
       setCompanyId(await EncryptedStorage.getItem('companyId'));
       setLoading(false);
     })();
@@ -152,12 +155,18 @@ export const SettingsScreen = ({navigation, route}) => {
               Unlock Screen
             </Button>
             <Button
-              style={{marginBottom: 40}}
+              style={{marginBottom: 20}}
               appearance="outline"
               onPress={() => NativeModules.ScreenLock.lock()}
               status="primary">
               Lock Screen
             </Button>
+            <View style={{marginBottom: 40}}>
+              <Text
+                style={{textAlign: 'center', fontSize: 12, color: '#DEDEDE'}}>
+                Version {version}
+              </Text>
+            </View>
           </ScrollView>
         </Layout>
       )}
