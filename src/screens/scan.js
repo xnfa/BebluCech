@@ -29,6 +29,9 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import {playSuccess, playError} from '../utils/sound';
 
 let scanLock = false;
+let lastestQrcode;
+let lastestQrcodeTimeout;
+
 const BackIcon = props => <Icon {...props} name="arrow-back" />;
 
 export function ScanScreen({navigation}) {
@@ -40,7 +43,7 @@ export function ScanScreen({navigation}) {
   });
   const [scanResultType, setScanResultType] = React.useState(null);
   const [user, setUser] = React.useState({});
-  const [qrcode, setQrcode] = React.useState('');
+  const [qrcode, setQrcode] = React.useState(undefined);
   const [networkConnected, setNetworkConnected] = React.useState(false);
   const [roomName, setRoomName] = React.useState('');
   const {isPeripheralConnected, unlockEntry} = useBLE();
@@ -54,7 +57,21 @@ export function ScanScreen({navigation}) {
   }, []);
 
   React.useEffect(() => {
-    const _qrcode = barcodes.map(v => v.displayValue).filter(v => v)[0];
+    const _qrcode = barcodes.map(v => v.displayValue).filter(v => v.length)[0];
+
+    if (lastestQrcode && lastestQrcode === _qrcode) {
+      return;
+    }
+
+    if (_qrcode) {
+      lastestQrcode = _qrcode;
+      if (lastestQrcodeTimeout) {
+        clearTimeout(lastestQrcodeTimeout);
+      }
+      lastestQrcodeTimeout = setTimeout(() => {
+        lastestQrcode = undefined;
+      }, 8000);
+    }
 
     setQrcode(_qrcode);
   }, [barcodes]);
@@ -165,8 +182,6 @@ export function ScanScreen({navigation}) {
                   isActive={isFocused}
                   type="deviceIssue"
                   user={user}
-                  frameProcessor={frameProcessor}
-                  frameProcessorFps={5}
                 />
               );
             } else if (!networkConnected) {
@@ -176,8 +191,6 @@ export function ScanScreen({navigation}) {
                   isActive={isFocused}
                   type="networkIssue"
                   user={user}
-                  frameProcessor={frameProcessor}
-                  frameProcessorFps={5}
                 />
               );
             } else {
@@ -187,8 +200,6 @@ export function ScanScreen({navigation}) {
                   isActive={isFocused}
                   type={scanResultType}
                   user={user}
-                  frameProcessor={frameProcessor}
-                  frameProcessorFps={5}
                 />
               ) : (
                 <View style={styles.cameraContainer}>
@@ -196,8 +207,6 @@ export function ScanScreen({navigation}) {
                     style={StyleSheet.absoluteFill}
                     device={device}
                     isActive={isFocused}
-                    frameProcessor={frameProcessor}
-                    frameProcessorFps={5}
                   />
                   <View style={styles.cameraMask}>
                     <Logo style={{marginTop: 32}} width={80} height={42} />
