@@ -263,6 +263,7 @@ export function BLEProvider({children}) {
             console.log('ping');
             await send('t');
           } catch (err) {
+            BleManager.disconnect(peripheralId).catch(e => console.log(e));
             console.log(err);
           }
         }
