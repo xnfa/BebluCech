@@ -213,6 +213,13 @@ export const AdminScreen = ({navigation, route}) => {
                     <Text style={{flex: 1, lineHeight: 30}}>Allow Guest</Text>
                     <Toggle checked={allowGuest} onChange={saveAllowGuest} />
                   </View>
+                  <Text style={{marginBottom: 20}}>Entry Log</Text>
+                  <Button
+                    appearance="outline"
+                    style={{marginBottom: 20}}
+                    onPress={() => navigation.navigate('EntryLog')}>
+                    Entry Log
+                  </Button>
                   <Text style={{marginBottom: 20}}>Pin Code Reset</Text>
                   <Button
                     appearance="outline"

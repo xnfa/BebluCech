@@ -117,7 +117,7 @@ export const SettingsScreen = ({navigation, route}) => {
               style={{marginBottom: 20}}
               appearance="outline"
               disabled={!isPeripheralConnected}
-              onPress={unlockEntry}>
+              onPress={() => unlockEntry()}>
               Unlock
             </Button>
             <Button

@@ -9,6 +9,7 @@ import EncryptedStorage from 'react-native-encrypted-storage';
 import BleManager from 'react-native-ble-manager';
 import Timeout from 'await-timeout';
 import CryptoJS from 'crypto-js';
+import pRetry from 'p-retry';
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 const key = CryptoJS.enc.Base64.parse(
@@ -40,8 +41,9 @@ export function BLEProvider({children}) {
     await EncryptedStorage.setItem('peripheral_id', '');
     setIsBonded(false);
     try {
+      console.log(`try disconnect ${peripheralId}`);
       if (peripheralId) {
-        await BleManager.disconnect(peripheralId, false);
+        await BleManager.disconnect(peripheralId);
       }
     } catch (err) {
       console.warn(err);
@@ -59,6 +61,7 @@ export function BLEProvider({children}) {
   const connectPeripheral = useCallback(
     async id => {
       try {
+        peripheralId = id;
         console.log('try connect peripheral', id);
         setIsConnecting(true);
         await BleManager.connect(id);
@@ -67,7 +70,6 @@ export function BLEProvider({children}) {
         await EncryptedStorage.setItem('peripheral_id', id);
         console.log('retrieved peripheral services', peripheralData);
         console.log('peripheral connected', id);
-        peripheralId = id;
         setIsBonded(true);
         setIsPeripheralConnected(true);
         await Timeout.set(1000);
@@ -80,6 +82,7 @@ export function BLEProvider({children}) {
         console.log('encrypted', encrypted);
         await send('a', encrypted.slice(0, 8));
       } catch (err) {
+        peripheralId = null;
         console.log(err);
       } finally {
         setIsConnecting(false);
@@ -104,10 +107,7 @@ export function BLEProvider({children}) {
   const unlockEntry = useCallback(
     async _peripheral => {
       console.log('entry unlocked');
-      send('u');
-      setTimeout(() => {
-        send('l');
-      }, 5000);
+      await send('u');
     },
     [send],
   );
@@ -124,6 +124,11 @@ export function BLEProvider({children}) {
     const connected = peripherals[0];
     if (!connected) {
       console.log('no connected peripherals');
+    } else {
+      peripheralId = connected.id;
+      await EncryptedStorage.setItem('peripheral_id', connected.id);
+      setIsBonded(true);
+      setIsPeripheralConnected(true);
     }
   }
 
@@ -152,8 +157,9 @@ export function BLEProvider({children}) {
   }
 
   const reconnectPeripheral = useCallback(async () => {
+    await retrieveConnected();
     const _peripheralId = await EncryptedStorage.getItem('peripheral_id');
-    if (_peripheralId) {
+    if (_peripheralId && !peripheralId) {
       setIsBonded(true);
       try {
         console.log('try connect bond device');
@@ -166,7 +172,24 @@ export function BLEProvider({children}) {
 
   const send = useCallback(async (method, params = null) => {
     const bytes = stringToBytes(`${method}|${params}`);
-    await BleManager.write(peripheralId, '1523', '1525', bytes);
+    await pRetry(
+      async () => {
+        try {
+          await BleManager.write(peripheralId, '1523', '1525', bytes);
+        } catch (err) {
+          console.log(err);
+          throw new Error('write error');
+        }
+      },
+      {
+        retries: 5,
+        onFailedAttempt: error => {
+          console.log(
+            `Send attempt ${error.attemptNumber} failed. There are ${error.retriesLeft} retries left.`,
+          );
+        },
+      },
+    );
   }, []);
 
   useEffect(() => {
@@ -227,6 +250,29 @@ export function BLEProvider({children}) {
       reconnectLoop = false;
     };
   }, [hasBLEPermission, reconnectPeripheral]);
+
+  useEffect(() => {
+    let pingLoop = true;
+    (async () => {
+      for (;;) {
+        if (!pingLoop) {
+          break;
+        }
+        if (peripheralId && isPeripheralConnected && hasBLEPermission) {
+          try {
+            console.log('ping');
+            await send('t');
+          } catch (err) {
+            console.log(err);
+          }
+        }
+        await Timeout.set(10 * 1000);
+      }
+    })();
+    return () => {
+      pingLoop = false;
+    };
+  }, [hasBLEPermission, isPeripheralConnected, send]);
 
   // We only want to render the underlying app after we
   // assert for the presence of a current user.

@@ -112,7 +112,7 @@ export function HomeScreen({navigation}) {
     return function cleanup() {
       clearInterval(int);
     };
-  });
+  }, []);
 
   React.useEffect(() => {
     const _qrcode = barcodes.filter(v => v.displayValue)[0];
@@ -154,6 +154,9 @@ export function HomeScreen({navigation}) {
           const members = JSON.parse(
             (await EncryptedStorage.getItem('members')) || '[]',
           );
+          const logs = JSON.parse(
+            (await EncryptedStorage.getItem('logs')) || '[]',
+          );
           const allowGuest =
             (await EncryptedStorage.getItem('allowGuest')) === 'true';
           console.log('members', members);
@@ -193,6 +196,17 @@ export function HomeScreen({navigation}) {
             setScanResultType('success');
             playSuccess();
             unlockEntry();
+            await EncryptedStorage.setItem(
+              'logs',
+              JSON.stringify([
+                ...logs,
+                {
+                  id: result.id,
+                  name: result.name,
+                  ts: Date.now(),
+                },
+              ]),
+            );
           }
         } catch (error) {
           console.log(error);
